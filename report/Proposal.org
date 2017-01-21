@@ -1,0 +1,45 @@
+#+TITLE: Project proposal for CSC8980 Computer Vision
+#+SUBTITLE: 3D point cloud from monocular RGB camera
+#+AUTHOR: Umar Arshad
+#+OPTIONS: toc:nil
+
+* Introduction
+
+I propose an application which will create a 3D point cloud of a static scene
+from a video or a series of images. The point cloud will be displayed using
+an application which will allow you to explore the 3D space from different
+perspectives. The application will use a standard monocular RGB camera to
+recreate the scene.
+
+* Approach
+
+The application will either take live input from a camera or load a video/images
+from the hard disk. The images will be analyzed and features will be extracted
+from multiple view points. The points will be placed in 3D space by
+triangulating location of similar features. The features will be AKAZE features.
+I suspect the point cloud will be sparse.
+
+An alternate approach would be to create a depth image and use it to create a more
+dense representation of the scene. This is something that requires more research
+and may not be a viable approach.
+
+* Infrastructure
+
+I will use the ArrayFire library to perform most of my calculations. My code
+will be written in C++ and make use of other open source frameworks as necessary.
+my project will make use of the CMake build system to generate the binaries but I
+intend to target the UNIX operating systems for the final application. Depending
+on the complexity I will either choose to write my own 3D application using OpenGL
+or Vulkan or use a exteranal application to display my point cloud.
+
+* Results and Datasets
+
+I will use several datasets to compare my results with real world coordinates.
+This can be done by creating a artificial 3D scene and reprojecting the results
+to validate the output. I will also use the KITTI benchmarking suite to analyze
+my results.
+
+I will compare my results against known world coordinates to measure the
+accuracy of my system. The goal of this project would be to place all points so
+that distance between two points will be the equivalent to the real world distance
+in the scene.
