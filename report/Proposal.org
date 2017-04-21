@@ -32,6 +32,9 @@ intend to target the UNIX operating systems for the final application. Depending
 on the complexity I will either choose to write my own 3D application using OpenGL
 or Vulkan or use a exteranal application to display my point cloud.
 
+The project will be hosted on [[http://github.com/umar456/vision][GitHub]] at the following link
+[[http://github.com/umar456/vision]]
+
 * Results and Datasets
 
 I will use several datasets to compare my results with real world coordinates.
