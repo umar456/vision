@@ -1,0 +1,53 @@
+#+TITLE: Face Tracking using VR Headset
+#+SUBTITLE: Final Project Report
+#+AUTHOR: Umar Arshad <umar456@gmail.com>
+#+LATEX_CLASS: article
+#+OPTIONS: num:10 toc:nil
+
+#+BEGIN_abstract
+
+Typically a VR headset makes it difficult to talk to other people in the room.
+This project attempts to create a more natural way to interact with people
+in a VR environment. The goal is to show the image of a person's face in a
+3D space which can be viewed from within the VR environment. 
+
+#+END_abstract
+
+
+\pagebreak
+
+* Contributions
+  - Collect VR telemetry information using the OpenVR SDK
+  - Store and read VR data from disk
+  - Setup Visual Studio and CMake projects on Windows and OSX respectively
+  - Develop high level design of the algorithm
+  - Visualization of VR data using OpenCV viz module
+  - Implement and experiment with multiple approaches to create a depth information
+  - Face tracking and detection implementation
+  - Research face detection and possible implementations
+  - Stereo rectification experiments
+  - Experiment with the SFM OpenCV module
+
+* Lessons Learned
+
+I learned several details about the limitations of the OpenCV library. Many of
+the functions require extensive experimentation to get reasonable results.
+Functions are poorly documented and require digging into the source code to get
+a good answer. OpenCV also has additional modules which are not part of the
+mainline library. These modules require certain dependencies before they appear
+as options in CMake.
+
+I also learned the importance of limiting the scope of your experiments. Early
+on I tried to directly use the VR headset to perform my experiments. This lead
+to inconsistent results because the data was not consistent. This is the reason
+I created the VR_Recorder project. It allows you to record the data and store it
+on disk. This allows for quick experimentation.
+
+It is very important to verify data coming in from hardware. I had a difficult
+time with getting good results because the data coming in from the headset was
+inaccurate at times.
+
+I would like to continue this project and implement the results using Unreal
+Engine or my own OpenGL application. This type of application would be very
+useful for this relatively young industry. It seems developers are still trying
+to figure out the best use cases for this technology.

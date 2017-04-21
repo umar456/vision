@@ -1,0 +1,8 @@
+#+TITLE: CS8980 Repo
+#+AUTHOR: Umar Arshad <umar456@gmail.com>
+
+* About
+
+This repository consists of reports and project for the Spring 2017 CS8980
+class. If you are evaluating this repository please proceed to the project
+folder for additional build instructions.
