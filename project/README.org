@@ -1,0 +1,82 @@
+#+TITLE: VR Face Tracker
+#+AUTHOR: Umar Arshad <umar456@gmail.com>
+
+* Introduction
+
+This is a project to visualize a person's face using a Vive Headset. It uses the
+front facing camera on the HTC Vive to project a person's face that may be
+sitting in a room with the user. This allows you to interact with them in a more
+natural way.
+
+* Requirements
+
+- OpenCV (Including the viz module)
+- CMake
+- Modern C++17 compiler
+
+* Build Instructions
+
+Install OpenCV with the opencv_viz and tracking modules. These modules are part
+of the opencv_contrib repo located [[https://github.com/opencv/opencv_contrib][here]]. You will need to install the vtk
+project to build the viz module.
+
+
+** OSX
+   On OSX you can install the viz module using the following command.
+
+#+BEGIN_SRC shell
+brew install --force opencv3 --with-vtk --c++11 --with-nonfree
+#+END_SRC
+
+   If this does not work(this sometimes happens with OSX). Follow the Linux
+   instructions below
+
+** Linux
+
+   These instructions *should* build OpenCV 3.2.0 with the viz and tracking
+   modules. VTK should be downloadable using any package manager(i.e. `sudo apt
+   install vtk`)
+
+#+BEGIN_SRC shell
+git clone git@github.com:opencv/opencv
+git clone git@github.com:opencv/opencv_contrib
+cd opencv_contrib
+git checkout 3.2.0
+cd ../opencv
+git checkout 3.2.0
+mkdir build
+cd build
+cmake -DBUILD_opencv_viz=ON -DBUILD_opencv_tracking=ON -DVTK_DIR=/path/to/vtk -DOPENCV_EXTRA_MODULES_PATH=/path/to/opencv_contrib/modules
+make -j8
+make install
+#+END_SRC
+
+Once OpenCV has been built, you can run the following commands to build this
+project. From within this folder run the following commands:
+
+#+BEGIN_SRC shell
+mkdir build
+cd build
+cmake ..
+make -j8
+#+END_SRC
+
+* Data
+
+You can generate the data required for this project by using the [[https://github.com/umar456/VR_Recorder][VR_Recorder]]
+project(Also created by the author). This project will allow you to generate a
+"recording" of the HTC Vive session and store it in a folder. These recordings
+can then be used by this project to perform tests without the use of the
+Vive.
+
+You can also request data from the author.
+
+* Status
+
+- Reading and tracking multiple faces in images
+- Creating a disparity map and calculate the depth
+- Projecting image into the location based on the depth
+- TODO: Apply a Kalman filter to reduce noise
+- TODO: Recognition and differentiate different faces in a scene
+- TODO: Track faces in 3D space and update locations based on new data
+- TODO: Create an OpenGL or Unreal Engine applicaiton

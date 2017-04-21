@@ -6,12 +6,21 @@
 #include <string>
 #include <vector>
 
+static const bool kDisplay = false;
+
+// This struct is composed of the image and the associated pose information
+// about the headset in the Lightroom3D coordinate system
 struct hmd_frame {
+  // Image
   cv::Mat image;
+  // The HTC Vive pose recorded from the headset
   cv::Mat pose;
 };
 
-std::pair<cv::Matx33f, cv::Vec3f> get_rotation_translation(const cv::Mat &p1) {
+// Decomposes the pose matrix and extracts the rotation and translation matrix
+// and vectors
+std::pair<cv::Matx33f, cv::Vec3f>
+get_rotation_translation(const cv::Mat &p1) {
   cv::Mat R(3, 3, CV_32F);
   cv::Mat t(3, 1, CV_32F);
   p1(cv::Rect(0, 0, 3, 3)).copyTo(R);
@@ -19,16 +28,19 @@ std::pair<cv::Matx33f, cv::Vec3f> get_rotation_translation(const cv::Mat &p1) {
   return std::make_pair(R, t);
 }
 
+// Gets the relitive pose between to poses in the world coordinate
 cv::Mat get_relative_pose(const cv::Mat &p1, const cv::Mat &p2) {
   return p1.inv() * p2;
 }
 
+// Creates a skew symmetric cross product matrix
 cv::Matx33f cross_mat(const cv::Vec<float, 3> &vec) {
   cv::Matx33f out;
   out << 0, -vec(2), vec(1), vec(2), 0, -vec(0), -vec(1), vec(0), 0;
   return out;
 }
 
+// Calculates the essential matrix given two poses
 cv::Matx33f essential_matrix(const cv::Mat &p1, const cv::Mat &p2) {
   auto rpose = get_relative_pose(p1, p2);
   auto[R, t] = get_rotation_translation(rpose);
@@ -42,6 +54,7 @@ cv::Matx33f essential_matrix(const cv::Mat &p1, const cv::Mat &p2) {
   return S * R;
 }
 
+// Calculates the fundamental matrix given two poses
 cv::Matx33f fundamental_matrix(const cv::Mat &p1, const cv::Mat &p2,
                                const cv::Mat &cam) {
   auto E = essential_matrix(p1, p2);
@@ -142,8 +155,8 @@ void bm_demo(cv::viz::Viz3d &win, std::vector<hmd_frame> &hmd_data,
         Mat(t).convertTo(tmat, CV_64F);
 
         Rect roi1, roi2;
-        stereoRectify(intrinsics, Mat(), intrinsics, Mat(), image_size,
-                      Rmat, tmat, R1, R2, P1, P2, Q, CALIB_ZERO_DISPARITY, -1,
+        stereoRectify(intrinsics, Mat(), intrinsics, Mat(), image_size, Rmat,
+                      tmat, R1, R2, P1, P2, Q, CALIB_ZERO_DISPARITY, -1,
                       image_size, &roi1, &roi2);
 
         Mat map11, map12, map21, map22;
@@ -250,7 +263,7 @@ int main(int argc, char **argv) {
   vector<hmd_frame> hmd_data;
 
   static const float focal_length = 0.013;
-  static const float pixel_size = 1.0*1e-6;
+  static const float pixel_size = 1.0 * 1e-6;
 
   for (int i = 0; i < 200; i++) {
     stringstream path_index, pose_index;
@@ -266,7 +279,7 @@ int main(int argc, char **argv) {
     pose(Rect(3, 0, 1, 3)).copyTo(hpose(Rect(3, 0, 1, 3)));
 
     Mat img = imread("../../vr_data/" + image_path);
-    GaussianBlur(img, img, Size(9,9), 0);
+    GaussianBlur(img, img, Size(9, 9), 0);
     hmd_data.emplace_back(hmd_frame{img, hpose});
   }
 
@@ -279,21 +292,21 @@ int main(int argc, char **argv) {
   int min_disparity = 0;
   int num_disparities = 32;
   int window_size = 9;
-  int smoothness_parameter1 = 8 * hmd_data[0].image.channels() * window_size * window_size;
-  int smoothness_parameter2 = 32 * hmd_data[0].image.channels() * window_size * window_size;
+  int smoothness_parameter1 =
+      8 * hmd_data[0].image.channels() * window_size * window_size;
+  int smoothness_parameter2 =
+      32 * hmd_data[0].image.channels() * window_size * window_size;
   int max_diff = 1;
   int prefilter_cap = 0;
   int uniqueness_ratio = 5;
   int speckle_window_size = 100;
   int speckle_range = 8;
   int sgbm_mode = StereoSGBM::MODE_SGBM;
-  //Ptr<cv::StereoBM> bm = cv::StereoBM::create();
-  Ptr<StereoSGBM> bm = StereoSGBM::create(min_disparity,
-                                          num_disparities, window_size,
-                                          smoothness_parameter1,
-                                          smoothness_parameter2,
-                                          max_diff,
-                                          prefilter_cap, uniqueness_ratio, speckle_window_size, speckle_range, sgbm_mode);
+  // Ptr<cv::StereoBM> bm = cv::StereoBM::create();
+  Ptr<StereoSGBM> bm = StereoSGBM::create(
+      min_disparity, num_disparities, window_size, smoothness_parameter1,
+      smoothness_parameter2, max_diff, prefilter_cap, uniqueness_ratio,
+      speckle_window_size, speckle_range, sgbm_mode);
 
   Matx33f e = Matx33f::eye();
   e(0, 0) *= -1;
@@ -317,17 +330,21 @@ int main(int argc, char **argv) {
       } else {
         tracker.update(hmd_data[i].image);
       }
-      Mat cjust_faces = Mat::zeros(hmd_data[i].image.size(), hmd_data[i].image.type());
+      Mat cjust_faces =
+          Mat::zeros(hmd_data[i].image.size(), hmd_data[i].image.type());
 
       for (int f = 0; f < tracker.boundingBoxes.size(); f++) {
         regions.push_back(tracker.boundingBoxes[f]);
         hmd_data[i].image.copyTo(cjust_faces);
 
         if (i > frame_interval) {
-          Mat rjust_faces = Mat::zeros(hmd_data[i-frame_interval].image.size(), hmd_data[i-frame_interval].image.type());
-          Mat ljust_faces = Mat::zeros(hmd_data[i-frame_interval].image.size(), hmd_data[i-frame_interval].image.type());
-          Mat limg, rimg,
-            lpose, rpose;
+          Mat rjust_faces =
+              Mat::zeros(hmd_data[i - frame_interval].image.size(),
+                         hmd_data[i - frame_interval].image.type());
+          Mat ljust_faces =
+              Mat::zeros(hmd_data[i - frame_interval].image.size(),
+                         hmd_data[i - frame_interval].image.type());
+          Mat limg, rimg, lpose, rpose;
           Rect rregion, lregion;
 
           // Figure out which frame is on the left. This is done by analyzing
@@ -336,22 +353,22 @@ int main(int argc, char **argv) {
           auto ppose = hmd_data[i - frame_interval].pose;
           auto rel_pose_mat = get_relative_pose(ppose, cpose);
           auto[R, t] = get_rotation_translation(rel_pose_mat);
-          if (t[0]<0) {
+          if (t[0] < 0) {
             rregion = regions.back();
             rimg = hmd_data[i].image;
             rpose = hmd_data[i].pose;
 
             lregion = regions.front();
-            limg = hmd_data[i-frame_interval].image;
-            lpose = hmd_data[i-frame_interval].pose;
+            limg = hmd_data[i - frame_interval].image;
+            lpose = hmd_data[i - frame_interval].pose;
           } else {
             lregion = regions.back();
             limg = hmd_data[i].image;
             lpose = hmd_data[i].pose;
 
             rregion = regions.front();
-            rimg = hmd_data[i-frame_interval].image;
-            rpose = hmd_data[i-frame_interval].pose;
+            rimg = hmd_data[i - frame_interval].image;
+            rpose = hmd_data[i - frame_interval].pose;
           }
           regions.pop_front();
 
@@ -365,18 +382,18 @@ int main(int argc, char **argv) {
           // Rectify the images and create a disparity map
           Mat Rl, Rr, Pl, Pr, Q;
           Rect roi1, roi2;
-          stereoRectify(intrinsics, Mat(), intrinsics, Mat(), image_size,
-                        Rmat, tmat, Rl, Rr, Pl, Pr, Q, 1
-                        , -1, Size(), &roi1, &roi2);
+          stereoRectify(intrinsics, Mat(), intrinsics, Mat(), image_size, Rmat,
+                        tmat, Rl, Rr, Pl, Pr, Q, 1, -1, Size(), &roi1, &roi2);
 
           Mat mapl1, mapl2, mapr1, mapr2;
-          initUndistortRectifyMap(intrinsics, Mat(), Rl, Pl, image_size, CV_16SC2,
-                                  mapl1, mapl2);
-          initUndistortRectifyMap(intrinsics, Mat(), Rr, Pr, image_size, CV_16SC2,
-                                  mapr1, mapr2);
-          //Mat frame, pframe;
+          initUndistortRectifyMap(intrinsics, Mat(), Rl, Pl, image_size,
+                                  CV_16SC2, mapl1, mapl2);
+          initUndistortRectifyMap(intrinsics, Mat(), Rr, Pr, image_size,
+                                  CV_16SC2, mapr1, mapr2);
+          // Mat frame, pframe;
           Mat rect_limg, rect_rimg;
-          Mat face_mask = Mat::zeros(hmd_data[i-frame_interval].image.size(), CV_8U);
+          Mat face_mask =
+              Mat::zeros(hmd_data[i - frame_interval].image.size(), CV_8U);
           face_mask(lregion) = 255;
 
           remap(limg, rect_limg, mapl1, mapl2, cv::INTER_LINEAR);
@@ -384,13 +401,11 @@ int main(int argc, char **argv) {
 
           cv::line(rect_limg, {0, 90}, {612, 90}, CV_RGB(255, 255, 255));
           cv::line(rect_rimg, {0, 90}, {612, 90}, CV_RGB(255, 255, 255));
-          imshow("rect_limg", rect_limg);
-          imshow("rect_rimg", rect_rimg);
 
           Mat disp, disp16;
           Mat img1, img2;
           bm->compute(rect_limg, rect_rimg, disp);
-          normalize(disp, disp16, 0, 1<<16, cv::NORM_MINMAX, CV_16U);
+          normalize(disp, disp16, 0, 1 << 16, cv::NORM_MINMAX, CV_16U);
           remap(face_mask, face_mask, mapl1, mapl2, cv::INTER_LINEAR);
           disp.copyTo(face_mask, face_mask);
           Mat depth = Mat::zeros(disp.size(), CV_32F);
@@ -400,28 +415,31 @@ int main(int argc, char **argv) {
           for (int ii = 0; ii < face_mask.size().height; ii++) {
             for (int jj = 0; jj < face_mask.size().width; jj++) {
               if (int disp = std::abs(face_mask.at<int>(ii, jj))) {
-                float& ref = depth.at<float>(ii, jj);
-                ref = (baseline * focal_length)/(disp*pixel_size);
+                float &ref = depth.at<float>(ii, jj);
+                ref = (baseline * focal_length) / (disp * pixel_size);
                 sum += ref;
                 count++;
               }
             }
           }
-          printf("sum: %f avg: %f\n", sum, sum/count);
-          imshow("mask", face_mask);
-          imshow("depth", depth);
-          imshow("disparity", disp16);
+          if(kDisplay) {
+            imshow("rect_limg", rect_limg);
+            imshow("rect_rimg", rect_rimg);
+            imshow("mask", face_mask);
+            imshow("depth", depth);
+            imshow("disparity", disp16);
+          }
 
           // imshow("disparity", disp);
           // imshow("disparity16", disp16);
           auto[RR, tt] = get_rotation_translation(hmd_data[i].pose);
           Affine3f rrpose(Mat(RR * e), tt);
 
-          float Z = sum/count;
+          float Z = sum / count;
           auto img_widget = cv::viz::WImage3D(limg, cv::Size2d(Z, Z));
           win.showWidget("face", img_widget);
 
-          Mat face_tt = Mat(RR * e * cv::Vec3f(0.0f, 0.0f, Z)+ tt);
+          Mat face_tt = Mat(RR * e * cv::Vec3f(0.0f, 0.0f, Z) + tt);
 
           auto img_pose = Affine3f(RR * e, face_tt);
           win.setWidgetPose("face", img_pose);
